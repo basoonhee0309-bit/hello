@@ -1,0 +1,158 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#1d4ed8">
+<title>무드맵 MOOD MAP | 우리 동네 감정을 지도에 남기고 개선으로 연결합니다</title>
+<meta name="description" content="장소·감정·이유를 한 기록으로 모아 지역 관계자에게 전달하는 개선 제안서 서비스">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<header class="topbar">
+  <a class="brand" href="#home"><span class="logo">●</span> 무드맵</a>
+  <span class="curview" id="curView"></span>
+  <button class="menubtn" id="menuBtn" aria-label="메뉴 열기" aria-expanded="false" aria-controls="menu"><span></span><span></span><span></span></button>
+</header>
+<div class="menuback" id="menuBack" hidden></div>
+<nav class="menu" id="menu" aria-label="주 메뉴" hidden>
+  <div class="menuhead"><strong>메뉴</strong><button class="close" id="menuClose" aria-label="메뉴 닫기">✕</button></div>
+  <a href="#home" data-v="home">🏠 홈</a>
+  <a href="#app" data-v="app">🗺️ 감정 지도</a>
+  <a href="#drawer" data-v="drawer">🗂️ 내 서랍장</a>
+  <a href="#proposals" data-v="proposals">📄 내 제안서</a>
+  <a href="#admin" data-v="admin" id="adminLink" hidden>🛠️ 관리자</a>
+  <a href="#contact" data-v="contact">💬 상담 신청</a>
+  <button type="button" class="menuitem" data-about="1">ℹ️ 서비스 알아보기</button>
+  <div id="userBar"></div>
+</nav>
+<p class="expmode" role="note" hidden><strong>체험 모드</strong> · 로그인 없이 이 브라우저에만 저장됩니다. 서버(Supabase) 설정 후 회원가입·로그인을 사용할 수 있습니다.</p>
+<div id="authScreen" hidden></div>
+
+<main id="top">
+  <section id="home" class="hero view">
+    <div class="heromap" aria-hidden="true">
+      <svg viewBox="0 0 400 700" preserveAspectRatio="xMidYMid slice">
+        <rect width="400" height="700" fill="#eef3e6"/>
+        <path d="M-10 520 C 90 470 150 560 250 520 S 380 450 420 480 L420 560 C 360 530 290 600 230 590 S 80 540 -10 590Z" fill="#bcd9ee"/>
+        <rect x="30" y="60" width="120" height="90" rx="10" fill="#cfe5bd"/>
+        <rect x="260" y="250" width="110" height="80" rx="10" fill="#cfe5bd"/>
+        <g stroke="#fff" stroke-width="14" fill="none" stroke-linecap="round"><path d="M-10 200 L410 170"/><path d="M60 -10 L110 710"/><path d="M250 -10 L300 710"/><path d="M-10 400 L410 430"/></g>
+        <g stroke="#f7d98b" stroke-width="5" fill="none" stroke-linecap="round"><path d="M-10 200 L410 170"/><path d="M-10 400 L410 430"/></g>
+        <g stroke="#fff" stroke-width="7" fill="none"><path d="M170 -10 L190 710"/><path d="M-10 300 L410 320"/><path d="M-10 620 L410 650"/><path d="M340 -10 L360 710"/></g>
+      </svg>
+    </div>
+    <span class="stk s1" style="--r:-8deg">😟<i>불안함</i></span>
+    <span class="stk s2" style="--r:6deg">😡<i>화남</i></span>
+    <span class="stk s3" style="--r:-4deg">😢<i>속상함</i></span>
+    <span class="stk s4" style="--r:9deg">😨<i>무서움</i></span>
+    <span class="stk s5" style="--r:-10deg">🙂<i>괜찮음</i></span>
+    <span class="stk s6" style="--r:5deg">😣<i>불편함</i></span>
+    <div class="herocard">
+      <p class="eyebrow">전국 시범 서비스</p>
+      <h1>우리 동네에<br>감정 스티커를<br>붙여 보세요</h1>
+      <p class="lead">장소마다 시민의 감정을 지도 위에 모아,<br>개선 제안서로 전달합니다.</p>
+      <div class="cta">
+        <a class="btn primary" href="#app">지도에서 기록하기</a>
+        <button class="btn ghost" data-about="1">서비스 알아보기</button>
+      </div>
+      <ul class="stats" id="stats"></ul>
+    </div>
+  </section>
+
+  <section id="app" class="section app view" hidden>
+    <h2>감정 지도</h2>
+    <div class="regionbar" id="regionFilters" role="group" aria-label="지역 선택"></div>
+    <div class="filters" id="filters" role="group" aria-label="문제 유형 필터"></div>
+    <div class="filters emof" id="emoFilters" role="group" aria-label="감정 필터"></div>
+    <div class="toolbar">
+      <select id="sort" aria-label="정렬">
+        <option value="new">최신순</option>
+        <option value="likes">공감순</option>
+      </select>
+      <button class="btn primary" id="startPick">＋ 이곳에 기록하기</button>
+    </div>
+    <div class="mapwrap">
+      <div id="map" aria-label="지도"></div>
+      <div id="crosshair" hidden><svg viewBox="0 0 24 34" width="30" height="42" aria-hidden="true"><path d="M12 33C12 33 2 20 2 12a10 10 0 0 1 20 0c0 8-10 21-10 21z" fill="#dc2626" stroke="#fff" stroke-width="2"/><circle cx="12" cy="12" r="4" fill="#fff"/></svg></div>
+      <div id="pickbar" hidden>
+        <span id="pickInfo">지도를 눌러 위치를 찍으세요</span>
+        <button class="btn sm" id="locate"><svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true" style="vertical-align:-3px;margin-right:4px"><circle cx="12" cy="12" r="4" fill="#2563eb"/><circle cx="12" cy="12" r="8" fill="none" stroke="#2563eb" stroke-width="2"/><path d="M12 1v4M12 19v4M1 12h4M19 12h4" stroke="#2563eb" stroke-width="2"/></svg>현재 위치</button>
+        <button class="btn sm primary" id="confirmPick" disabled>이 위치로 정하기</button>
+        <button class="btn sm ghost" id="cancelPick">취소</button>
+      </div>
+    </div>
+    <div class="listhead"><h3>장소별 감정 <small id="count"></small></h3></div>
+    <div class="geoguide" id="geoGuide" role="status"></div>
+    <ul class="list" id="list"></ul>
+    <div class="empty" id="empty" hidden>
+      <p id="emptyMsg">이 조건에 맞는 기록이 없습니다.</p>
+      <button class="btn ghost" id="clearFilter">필터 해제</button>
+    </div>
+  </section>
+
+  <section id="drawer" class="section view" hidden>
+    <h2>내 감정 서랍장</h2>
+    <p class="sub">장소마다 남긴 감정과 기록이 시간순으로 차곡차곡 쌓입니다. 내가 남긴 기록만 보여요.</p>
+    <div id="drawerBody"></div>
+  </section>
+
+  <section id="admin" class="section view" hidden>
+    <h2>관리자 · 기록 현황</h2>
+    <p class="sub">사용자들의 감정 기록을 모아 보고 문제 개선에 활용합니다. 이 화면은 관리자 계정에게만 서버가 데이터를 내려줍니다.</p>
+    <div id="adminBody"></div>
+  </section>
+
+  <section id="proposals" class="section view" hidden>
+    <h2>내 제안서</h2>
+    <p class="sub">내가 작성한 제안서입니다. 작성자 본인과 관리자만 볼 수 있으며, 수정·취소할 수 있습니다.</p>
+    <ul class="list" id="proposalList"></ul>
+  </section>
+
+  <section id="contact" class="section contact view" hidden>
+    <h2>고객 상담 신청</h2>
+    <p class="sub">도입·협력·이용 문의를 남겨 주세요. 확인 후 연락드립니다.</p>
+    <form id="consultForm" novalidate>
+      <label>이름
+        <input name="name" type="text" autocomplete="name" maxlength="30" placeholder="홍길동" required>
+        <small class="err" data-for="name"></small>
+      </label>
+      <label>전화번호
+        <input name="phone" type="tel" inputmode="tel" autocomplete="tel" placeholder="010-1234-5678" required>
+        <small class="err" data-for="phone"></small>
+      </label>
+      <label>상담 내용
+        <textarea name="message" rows="5" maxlength="500" placeholder="문의하실 내용을 적어 주세요" required></textarea>
+        <small class="err" data-for="message"></small>
+      </label>
+      <label class="check"><input type="checkbox" name="agree" required> 상담을 위해 이름·전화번호를 수집·이용하는 데 동의합니다.</label>
+      <small class="err" data-for="agree"></small>
+      <button class="btn primary block" type="submit">상담 신청하기</button>
+      <p class="formmsg" id="consultMsg" role="status"></p>
+    </form>
+  </section>
+</main>
+
+<footer>
+  <p><strong>무드맵 MOOD MAP</strong> · 리빙랩 해커톤 웹 프로토타입 · v1.9</p>
+  <p>지도 © OpenStreetMap contributors</p>
+</footer>
+
+<div class="modal" id="modal" hidden>
+  <div class="sheet" role="dialog" aria-modal="true">
+    <button class="close" id="modalClose" aria-label="닫기">✕</button>
+    <div id="modalBody"></div>
+  </div>
+</div>
+<div class="toast" id="toast" role="status"></div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="config.js"></script>
+<script src="cloud.js"></script>
+<script src="cleanbot.js"></script>
+<script src="sigungu.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
