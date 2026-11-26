@@ -214,6 +214,8 @@ body.needauth main,body.needauth footer,body.needauth .topbar nav,body.needauth 
 @media(max-width:520px){#userBar .uname{display:none}}
 .btn-sm.ghost{background:transparent;color:var(--blue);border:1.5px solid var(--blue);cursor:pointer;font-family:inherit;font-size:13px}
 .topbar nav #adminLink:not([hidden]){display:inline}
+.brand,.topbar nav a{white-space:nowrap}
+@media(max-width:380px){.brand{font-size:15px}.topbar{padding:10px 12px}.topbar nav{gap:6px}.topbar .btn-sm{padding:5px 8px;font-size:12px}}
 .me-wrap{background:none;border:0}
 .me-dot .pulse{fill:#2563eb;opacity:.25;transform-origin:14px 14px;animation:mepulse 2s ease-out infinite}
 @keyframes mepulse{0%{transform:scale(.5);opacity:.5}100%{transform:scale(1);opacity:0}}
