@@ -24,7 +24,6 @@
   <a href="#drawer" data-v="drawer">🗂️ 내 서랍장</a>
   <a href="#proposals" data-v="proposals">📄 내 제안서</a>
   <a href="#admin" data-v="admin" id="adminLink" hidden>🛠️ 관리자</a>
-  <a href="#contact" data-v="contact">💬 상담 신청</a>
   <button type="button" class="menuitem" data-about="1">ℹ️ 서비스 알아보기</button>
   <div id="userBar"></div>
 </nav>
@@ -111,28 +110,6 @@
     <ul class="list" id="proposalList"></ul>
   </section>
 
-  <section id="contact" class="section contact view" hidden>
-    <h2>고객 상담 신청</h2>
-    <p class="sub">도입·협력·이용 문의를 남겨 주세요. 확인 후 연락드립니다.</p>
-    <form id="consultForm" novalidate>
-      <label>이름
-        <input name="name" type="text" autocomplete="name" maxlength="30" placeholder="홍길동" required>
-        <small class="err" data-for="name"></small>
-      </label>
-      <label>전화번호
-        <input name="phone" type="tel" inputmode="tel" autocomplete="tel" placeholder="010-1234-5678" required>
-        <small class="err" data-for="phone"></small>
-      </label>
-      <label>상담 내용
-        <textarea name="message" rows="5" maxlength="500" placeholder="문의하실 내용을 적어 주세요" required></textarea>
-        <small class="err" data-for="message"></small>
-      </label>
-      <label class="check"><input type="checkbox" name="agree" required> 상담을 위해 이름·전화번호를 수집·이용하는 데 동의합니다.</label>
-      <small class="err" data-for="agree"></small>
-      <button class="btn primary block" type="submit">상담 신청하기</button>
-      <p class="formmsg" id="consultMsg" role="status"></p>
-    </form>
-  </section>
 </main>
 
 <footer>

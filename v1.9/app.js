@@ -205,12 +205,12 @@
         { status: "reviewing", actor: "demo_example", note: "검토 중 (예시)", at: now - d / 4 }
       ]
     })];
-    return { v: 4, issues: issues, comments: comments, proposals: proposals, consults: [], settings: { timelinePublic: false } };
+    return { v: 4, issues: issues, comments: comments, proposals: proposals, settings: { timelinePublic: false } };
   }
   function migrate(old) {
     old.issues.forEach(function (i) { i.emotion = normEmo(i.emotion); i.situation = i.situation || ""; });
     (old.proposals || []).forEach(normalizeProposal);
-    old.comments = old.comments || []; old.consults = old.consults || []; old.v = 2;
+    old.comments = old.comments || []; old.v = 2;
     return old;
   }
   function migrate3(d) {
@@ -249,7 +249,7 @@
     if (d) d.settings = d.settings || { timelinePublic: false };
     return d;
   }
-  function emptyDb() { return { v: 4, issues: [], comments: [], proposals: [], consults: [], settings: { timelinePublic: true } }; }
+  function emptyDb() { return { v: 4, issues: [], comments: [], proposals: [], settings: { timelinePublic: true } }; }
   // 서버 모드: 이 기기의 기존 기록(localDb)은 읽기만 하고, 사용자가 직접 옮기기 전에는 건드리지 않는다.
   var localDb = CLOUD ? loadLocal(false) : null;
   var db = CLOUD ? emptyDb() : loadLocal(true);
@@ -913,7 +913,7 @@
     var p = db.proposals.find(function (x) { return x.id === id; });
     if (p) viewProposal(p, p.author === uid, false, tab);
   }
-  var VIEWS = { home: "홈", app: "감정 지도", drawer: "내 서랍장", proposals: "내 제안서", admin: "관리자", contact: "상담 신청" };
+  var VIEWS = { home: "홈", app: "감정 지도", drawer: "내 서랍장", proposals: "내 제안서", admin: "관리자" };
   function showView(v) {
     if (!VIEWS[v] || (v === "admin" && me.role !== "admin")) v = "home";
     if (state.picking && v !== "app") setPicking(false);
@@ -953,33 +953,6 @@
         else throw 0;
       } catch (e) { toast("공유 링크를 읽을 수 없습니다."); }
     }
-  }
-
-  /* ---------- 상담 신청 ---------- */
-  function initConsult() {
-    var f = $("#consultForm");
-    f.addEventListener("submit", function (e) {
-      e.preventDefault();
-      var v = { name: f.name.value.trim(), phone: f.phone.value.trim(), message: f.message.value.trim() }, ok = true;
-      var err = function (k, m) { f.querySelector("[data-for=" + k + "]").textContent = m; if (m) ok = false; };
-      err("name", v.name ? "" : "이름을 입력해 주세요.");
-      err("phone", /^0\d{1,2}-?\d{3,4}-?\d{4}$/.test(v.phone) ? "" : "올바른 전화번호를 입력해 주세요. (예: 010-1234-5678)");
-      err("message", v.message.length >= 5 ? "" : "상담 내용을 5자 이상 입력해 주세요.");
-      err("agree", f.agree.checked ? "" : "개인정보 수집·이용에 동의해 주세요.");
-      var msg = $("#consultMsg"); msg.textContent = ""; msg.style.color = "";
-      if (!ok) return;
-      var rec = Object.assign({ id: newId(), at: Date.now() }, v), btn = f.querySelector("button[type=submit]");
-      btn.disabled = true;
-      var ep = (window.MOODMAP_CONFIG || {}).CONSULT_ENDPOINT;
-      var done = function () {
-        db.consults.push(rec); save(); f.reset(); btn.disabled = false;
-        msg.textContent = "상담 신청이 접수되었습니다. 확인 후 연락드리겠습니다.";
-      };
-      if (!ep) return done();
-      fetch(ep, { method: "POST", headers: { "Content-Type": "application/json", Accept: "application/json" }, body: JSON.stringify(v) })
-        .then(function (r) { if (!r.ok) throw 0; done(); })
-        .catch(function () { btn.disabled = false; msg.style.color = "#b91c1c"; msg.textContent = "전송에 실패했습니다. 입력하신 내용은 그대로 있으니 다시 시도해 주세요."; });
-    });
   }
 
   /* ---------- 이벤트 ---------- */
@@ -1387,7 +1360,7 @@
   function startApp() {
     if (started) return; started = true;
     $("#authScreen").hidden = true; document.body.classList.remove("needauth");
-    renderUserBar(); initMap(); renderAll(); initConsult();
+    renderUserBar(); initMap(); renderAll();
     window.addEventListener("hashchange", route);
     route();
     if (me.role === "admin") loadAdmin();
