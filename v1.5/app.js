@@ -1141,7 +1141,7 @@
       return (!f.admEmo || i.emotion === f.admEmo) && (!f.admCat || i.category === f.admCat) && (!f.admVis || (f.admVis === "hidden" ? i.hidden : i.visibility === f.admVis)) &&
         (!q || (i.place + " " + i.description + " " + i.situation + " " + (adm.names[i.author] || "")).toLowerCase().indexOf(q) >= 0);
     });
-    a.sort(function (x, y) { return f.admSort === "level" ? (y.discomfort || 0) - (x.discomfort || 0) : f.admSort === "old" ? x.at - y.at : y.at - x.at; });
+    a.sort(function (x, y) { return f.admSort === "level" ? (x.discomfort || 99) - (y.discomfort || 99) : f.admSort === "old" ? x.at - y.at : y.at - x.at; });
     return a;
   }
   function renderAdmin() {
@@ -1158,14 +1158,14 @@
     var list = admFiltered(), sel = function (id, label, opts, cur) {
       return '<select id="' + id + '" aria-label="' + label + '"><option value="">' + label + "</option>" + opts.map(function (o) { return '<option value="' + o[0] + '"' + (cur === o[0] ? " selected" : "") + ">" + esc(o[1]) + "</option>"; }).join("") + "</select>";
     };
-    var h = '<ul class="admstats"><li><b>' + all.length + "</b>전체 기록</li><li><b>" + users_n(users) + "</b>참여 사용자</li><li><b>" + pub + " / " + (all.length - pub) + "</b>공개 / 나만 보기</li><li><b>" + hid + "</b>숨김</li><li><b>" + avg + "</b>평균 불편 정도(1~10)</li></ul>" +
+    var h = '<ul class="admstats"><li><b>' + all.length + "</b>전체 기록</li><li><b>" + users_n(users) + "</b>참여 사용자</li><li><b>" + pub + " / " + (all.length - pub) + "</b>공개 / 나만 보기</li><li><b>" + hid + "</b>숨김</li><li><b>" + avg + "</b>평균 만족도(1 불편 ~ 10 만족)</li></ul>" +
       '<div class="admgrid"><div><h3 class="h4">감정 분포</h3>' + (all.length ? distBar(countBy(all), all.length) : "") + '</div><div><h3 class="h4">문제 유형</h3><ul class="plain">' +
       Object.keys(cats).sort(function (a, b) { return cats[b] - cats[a]; }).map(function (k) { return "<li>" + esc(catLabel(k)) + " <b>" + cats[k] + "</b></li>"; }).join("") +
       '</ul></div><div><h3 class="h4">기록 많은 장소</h3><ol class="plain">' + topP.map(function (p) { return "<li>" + esc(p) + " <b>" + places[p] + "</b></li>"; }).join("") + "</ol></div></div>" +
       '<div class="dfilters">' + sel("admEmo", "모든 감정", Object.keys(EMO).map(function (k) { return [k, EMO[k].e + " " + EMO[k].label]; }), adm.f.admEmo) +
       sel("admCat", "모든 유형", Object.keys(CATS).map(function (k) { return [k, CATS[k].label]; }), adm.f.admCat) +
       sel("admVis", "공개 범위 전체", [["public", "공개"], ["private", "나만 보기"], ["hidden", "숨김 처리됨"]], adm.f.admVis) +
-      '<select id="admSort" aria-label="정렬"><option value="new"' + (adm.f.admSort === "new" ? " selected" : "") + '>최신순</option><option value="old"' + (adm.f.admSort === "old" ? " selected" : "") + '>오래된 순</option><option value="level"' + (adm.f.admSort === "level" ? " selected" : "") + ">불편 정도순</option></select>" +
+      '<select id="admSort" aria-label="정렬"><option value="new"' + (adm.f.admSort === "new" ? " selected" : "") + '>최신순</option><option value="old"' + (adm.f.admSort === "old" ? " selected" : "") + '>오래된 순</option><option value="level"' + (adm.f.admSort === "level" ? " selected" : "") + ">가장 불편한 순</option></select>" +
       '<input type="search" id="admQ" placeholder="장소·내용·작성자 검색" value="' + esc(adm.q) + '" aria-label="검색"></div>' +
       '<div class="admbar"><span class="ro">' + list.length + '건 표시</span><button class="btn sm ghost" id="admReload">새로고침</button><button class="btn sm" id="admCsv">CSV 내려받기</button></div>' +
       '<ul class="admlist">' + list.slice(0, adm.shown).map(function (i) {
@@ -1206,7 +1206,7 @@
       if (/^[=+\-@\t]/.test(v)) v = "'" + v;
       return '"' + v.replace(/"/g, '""') + '"';
     };
-    var rows = [["기록ID", "작성자", "작성일시", "감정", "유형", "불편정도", "장소", "위도", "경도", "공개범위", "숨김", "내용", "상황"]].concat(admFiltered().map(function (i) {
+    var rows = [["기록ID", "작성자", "작성일시", "감정", "유형", "만족도(1불편~10만족)", "장소", "위도", "경도", "공개범위", "숨김", "내용", "상황"]].concat(admFiltered().map(function (i) {
       return [i.id, adm.names[i.author] || "", new Date(i.at).toISOString(), emoOf(i.emotion).label, catLabel(i.category, i.categoryOther), i.discomfort || "", i.place, i.lat, i.lng, i.visibility, i.hidden ? "Y" : "", i.description, i.situation];
     }));
     var blob = new Blob(["\ufeff" + rows.map(function (r) { return r.map(cell).join(","); }).join("\r\n")], { type: "text/csv;charset=utf-8" });
